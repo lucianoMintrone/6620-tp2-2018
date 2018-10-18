@@ -1,1 +1,6 @@
-# 6620-tp2-2018
+# Caché
+
+## Compilación
+Para compilar hacer `make`
+
+Eso genera un ejecutable `tp2`
