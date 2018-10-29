@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <time.h>
+#include <cache.h>
 
 typedef unsigned char byte;
 
@@ -91,7 +92,7 @@ int write_in_cache(char* address, char* value) {
 
 double calculate_miss_rate() {
 	if (cache.number_of_memory_accesses != 0) {
-		return cache.number_of_misses / cache.number_of_memory_accesses;	
+		return cache.number_of_misses / cache.number_of_memory_accesses;
 	} else {
 		return 0;
 	}
@@ -169,6 +170,6 @@ int main (int argc, char *argv[]) {
 
 	init();
 	read_file_and_cache_data(input_file, output_file);
-	
+
 	return EXIT_SUCCESS;
 }

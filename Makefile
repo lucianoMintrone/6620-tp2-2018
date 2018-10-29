@@ -11,7 +11,9 @@ DEFS    = -I. -D$(SYSTYPE)
 CFLAGS  = $(DEBUG) $(OPT) $(DEFS)
 OPTS	= 'CC=$(CC)'
 SRCS	= main.c
+HDRS  = cache.h
 PROG	= tp2
+
 
 $(PROG): $(SRCS) $(HDRS)
 	$(CC) $(CFLAGS) -o $@ $(SRCS) $(SYSLIBS)
