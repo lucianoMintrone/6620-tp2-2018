@@ -6,6 +6,11 @@
 #include <string.h>
 #include <time.h>
 
+const int NUMBER_OF_BLOCKS_IN_MP = 65536;
+const int NUMBER_OF_BLOCKS_IN_SET = 4;
+const int NUMBER_OF_SETS_IN_CACHE = 16;
+const int NUMBER_OF_BYTES_IN_BLOCK = 64;
+
 typedef unsigned char byte;
 
 typedef struct Block {
@@ -13,21 +18,21 @@ typedef struct Block {
 	bool is_valid;
 	time_t last_used_at;
 	int tag;
-	byte bytes[64];
+	byte bytes[NUMBER_OF_BYTES_IN_BLOCK];
 } Block;
 
 typedef struct Set {
-	Block blocks[4];
+	Block blocks[NUMBER_OF_BLOCKS_IN_SET];
 } Set;
 
 typedef struct Cache {
 	int number_of_memory_accesses;
 	int number_of_misses;
-	Set sets[16];
+	Set sets[NUMBER_OF_SETS_IN_CACHE];
 } Cache;
 
 typedef struct Memory {
-	Block blocks[65536];
+	Block blocks[MP_NUMBER_OF_BLOCKS];
 } Memory;
 
 Cache cache;
@@ -49,28 +54,44 @@ int get_tag(int address) {
 	int bit_mask = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5);
 	return (byte)(address & bit_mask);
 }
+void initPrincipalMemory() {
+	int i;
+	for (i = 0; i < MP_NUMBER_OF_BLOCKS; i++) {
+		Block block;
+		block.is_dirty = false;
+		block.is_valid = false;
+		block.last_used_at = 0;
+		block.tag = 0;
+		int k;
+		for(k = 0; k < NUMBER_OF_BYTES_IN_BLOCK; k++) {
+			block.bytes[k] = 0;
+		}
+		memory.blocks[i] = block;
+	}
+}
 
 void init() {
 	cache.number_of_misses = 0;
 	cache.number_of_memory_accesses = 0;
 	int i;
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < NUMBER_OF_SETS_IN_CACHE; i++) {
 		Set set;
 		int j;
-		for(j = 0; j < 4; j++) {
+		for(j = 0; j < NUMBER_OF_BLOCKS_IN_SET; j++) {
 			Block block;
 			block.is_dirty = false;
 			block.is_valid = false;
 			block.last_used_at = 0;
 			block.tag = 0;
 			int k;
-			for(k = 0; k < 64; k++) {
+			for(k = 0; k < NUMBER_OF_BYTES_IN_BLOCK; k++) {
 				block.bytes[k] = 0;
 			}
 			set.blocks[j] = block;
 		}
 		cache.sets[i] = set;
 	}
+	initPrincipalMemory();
 }
 
 void print_result(char **result, int len, FILE *output_file) {
@@ -81,10 +102,12 @@ void print_result(char **result, int len, FILE *output_file) {
 }
 
 int read_from_cache(char* address, char* value) {
+	cache.number_of_memory_accesses += 1;
 	return 123;
 }
 
 int write_in_cache(char* address, char* value) {
+	cache.number_of_memory_accesses += 1;
 	int val = atoi(value);
 	return val;
 }
