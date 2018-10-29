@@ -6,10 +6,10 @@
 #include <string.h>
 #include <time.h>
 
-const int NUMBER_OF_BLOCKS_IN_MP = 65536;
-const int NUMBER_OF_BLOCKS_IN_SET = 4;
-const int NUMBER_OF_SETS_IN_CACHE = 16;
-const int NUMBER_OF_BYTES_IN_BLOCK = 64;
+#define NUMBER_OF_BLOCKS_IN_MP 65536
+#define NUMBER_OF_BLOCKS_IN_SET 4
+#define NUMBER_OF_SETS_IN_CACHE 16
+#define NUMBER_OF_BYTES_IN_BLOCK 64
 
 typedef unsigned char byte;
 
@@ -32,7 +32,7 @@ typedef struct Cache {
 } Cache;
 
 typedef struct Memory {
-	Block blocks[MP_NUMBER_OF_BLOCKS];
+	Block blocks[NUMBER_OF_BLOCKS_IN_MP];
 } Memory;
 
 Cache cache;
@@ -56,7 +56,7 @@ int get_tag(int address) {
 }
 void initPrincipalMemory() {
 	int i;
-	for (i = 0; i < MP_NUMBER_OF_BLOCKS; i++) {
+	for (i = 0; i < NUMBER_OF_BLOCKS_IN_MP; i++) {
 		Block block;
 		block.is_dirty = false;
 		block.is_valid = false;
