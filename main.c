@@ -123,6 +123,14 @@ int is_dirty(int way, int blocknum) {
 	return cache.sets[blocknum].blocks[way].is_dirty;
 }
 
+void read_block(int blocknum) {
+	Block block = memory.blocks[blocknum];
+	// Tiene que hacer blocknum mod 16 para saber a que set de la cache mapea
+	// En ese set buscar el bloque lru
+	// Si no esta dirty se puede pisar
+	// Si esta dirty hay que primero escribirlo en MP y despues pisarlo 
+}
+
 void print_result(char **result, int len, FILE *output_file) {
 	size_t i;
 	for (i = 0; i < len; i++) {
