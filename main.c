@@ -119,6 +119,10 @@ Block find_lru(int setnum) {
 	return lru_block;
 }
 
+int is_dirty(int way, int blocknum) {
+	return cache.sets[blocknum].blocks[way].is_dirty;
+}
+
 void print_result(char **result, int len, FILE *output_file) {
 	size_t i;
 	for (i = 0; i < len; i++) {
@@ -216,6 +220,6 @@ int main (int argc, char *argv[]) {
 
 	init();
 	read_file_and_cache_data(input_file, output_file);
-	
+
 	return EXIT_SUCCESS;
 }
