@@ -54,6 +54,11 @@ int get_tag(int address) {
 	int bit_mask = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5);
 	return (byte)(address & bit_mask);
 }
+
+Set find_set(int address) {
+	return cache.sets[get_index(address) - 1];
+}
+
 void initPrincipalMemory() {
 	int i;
 	for (i = 0; i < NUMBER_OF_BLOCKS_IN_MP; i++) {
@@ -108,8 +113,7 @@ int read_from_cache(char* address, char* value) {
 
 int write_in_cache(char* address, char* value) {
 	cache.number_of_memory_accesses += 1;
-	int val = atoi(value);
-	return val;
+	return atoi(value);
 }
 
 double calculate_miss_rate() {
