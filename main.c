@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
 
 #define NUMBER_OF_BLOCKS_IN_MP 65536
 #define NUMBER_OF_BLOCKS_IN_SET 4
@@ -16,7 +17,7 @@ typedef unsigned char byte;
 typedef struct Block {
 	bool is_dirty;
 	bool is_valid;
-	time_t last_used_at;
+	long last_used_at; //The current time in microseconds.
 	int tag;
 	byte bytes[NUMBER_OF_BYTES_IN_BLOCK];
 } Block;
@@ -38,6 +39,12 @@ typedef struct Memory {
 Cache cache;
 Memory memory;
 
+long getMicrotime() {
+	struct timeval currentTime;
+	gettimeofday(&currentTime, NULL);
+	return currentTime.tv_sec * (int)1e6 + currentTime.tv_usec;
+}
+
 int get_offset(int address) {
 	int bit_mask = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5);
 	return (byte)(address & bit_mask);
@@ -53,10 +60,6 @@ int get_tag(int address) {
 	address = address >> 10;
 	int bit_mask = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5);
 	return (byte)(address & bit_mask);
-}
-
-Set find_set(int address) {
-	return cache.sets[get_index(address) - 1];
 }
 
 void initPrincipalMemory() {
@@ -97,6 +100,23 @@ void init() {
 		cache.sets[i] = set;
 	}
 	initPrincipalMemory();
+}
+
+Set find_set(int address) {
+	return cache.sets[get_index(address) - 1];
+}
+
+Block find_lru(int setnum) {
+	int i;
+	Set set = cache.sets[setnum];
+	Block lru_block = set.blocks[0];
+	for(i = 1; i < NUMBER_OF_BLOCKS_IN_SET; i++) {
+		Block block = set.blocks[i];
+		if (block.last_used_at < lru_block.last_used_at) {
+			lru_block = block;
+		}
+	}
+	return lru_block;
 }
 
 void print_result(char **result, int len, FILE *output_file) {
