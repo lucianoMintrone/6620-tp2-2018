@@ -89,6 +89,12 @@ int get_way_of_block(Block block, int set_number) {
 	return i;
 }
 
+int get_mp_address(int tag, int index) {
+	int mp_address = tag;
+	mp_address = mp_address << 6;
+	return mp_address + index;
+}
+
 void init() {
 	cache.number_of_misses = 0;
 	cache.number_of_memory_accesses = 0;
@@ -134,12 +140,21 @@ int is_dirty(int way, int blocknum) {
 	return cache.sets[blocknum].blocks[way].is_dirty;
 }
 
+void write_block(int way, int set_number) {
+	Block block = cache.sets[set_number].blocks[way];
+	int mp_address = get_mp_address(block.tag, set_number);
+	block.is_dirty = false;
+	block.is_valid = true;
+	block.last_used_at = 0;
+	memory.blocks[mp_address] = block;
+}
+
 void read_block(int blocknum) {
 	Block memory_block = memory.blocks[blocknum];
 	int set_number = blocknum % NUMBER_OF_SETS_IN_CACHE;
 	Block cache_block = find_lru(set_number);
 	if (cache_block.is_dirty) {
-		// write_block(get_way_of_block(cache_block, set_number), set_number);
+		write_block(get_way_of_block(cache_block, set_number), set_number);
 	}
 	cache_block = memory_block;
 	cache_block.last_used_at = get_microtime();
