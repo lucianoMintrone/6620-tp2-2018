@@ -39,7 +39,7 @@ typedef struct Memory {
 Cache cache;
 Memory memory;
 
-long getMicrotime() {
+long get_microtime() {
 	struct timeval currentTime;
 	gettimeofday(&currentTime, NULL);
 	return currentTime.tv_sec * (int)1e6 + currentTime.tv_usec;
@@ -62,12 +62,12 @@ int get_tag(int address) {
 	return (byte)(address & bit_mask);
 }
 
-void initPrincipalMemory() {
+void init_principal_memory() {
 	int i;
 	for (i = 0; i < NUMBER_OF_BLOCKS_IN_MP; i++) {
 		Block block;
 		block.is_dirty = false;
-		block.is_valid = false;
+		block.is_valid = true;
 		block.last_used_at = 0;
 		block.tag = 0;
 		int k;
@@ -76,6 +76,17 @@ void initPrincipalMemory() {
 		}
 		memory.blocks[i] = block;
 	}
+}
+
+int get_way_of_block(Block block, int set_number) {
+	int i;
+	Set set = cache.sets[set_number];
+	for(i = 0; i < NUMBER_OF_BLOCKS_IN_SET; i++) {
+		if(set.blocks[i].tag == block.tag) {
+			return i;
+		}
+	}
+	return i;
 }
 
 void init() {
@@ -99,7 +110,7 @@ void init() {
 		}
 		cache.sets[i] = set;
 	}
-	initPrincipalMemory();
+	init_principal_memory();
 }
 
 Set find_set(int address) {
@@ -124,11 +135,16 @@ int is_dirty(int way, int blocknum) {
 }
 
 void read_block(int blocknum) {
-	Block block = memory.blocks[blocknum];
-	// Tiene que hacer blocknum mod 16 para saber a que set de la cache mapea
-	// En ese set buscar el bloque lru
-	// Si no esta dirty se puede pisar
-	// Si esta dirty hay que primero escribirlo en MP y despues pisarlo 
+	Block memory_block = memory.blocks[blocknum];
+	int set_number = blocknum % NUMBER_OF_SETS_IN_CACHE;
+	Block cache_block = find_lru(set_number);
+	if (cache_block.is_dirty) {
+		// write_block(get_way_of_block(cache_block, set_number), set_number);
+	}
+	cache_block = memory_block;
+	cache_block.last_used_at = get_microtime();
+	cache_block.is_valid = true;
+	cache_block.is_dirty = false;
 }
 
 void print_result(char **result, int len, FILE *output_file) {
@@ -201,7 +217,7 @@ void read_file_and_cache_data(FILE *input_file, FILE *output_file) {
 	fclose(input_file);
 }
 
-int main (int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 	FILE *output_file, *input_file;
 	output_file = input_file = NULL;
 
