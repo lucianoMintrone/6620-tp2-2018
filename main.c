@@ -206,6 +206,7 @@ void write_byte(int address, char value) {
 	Set set = find_set(address);
 	int addres_index = get_index(address);
 	int address_tag = get_tag(address);
+	int address_offset = get_offset(address);
 
 	// Iterate in all the ways of the set
 	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
@@ -213,8 +214,8 @@ void write_byte(int address, char value) {
 
 		// If the block was found and is valid
 		if (address_tag == block.tag && block.is_valid) {
-			// Esto va al checkeodromo 
-			block.bytes[addres_index] = value;
+			// Esto va al checkeodromo
+			block.bytes[address_offset] = value;
 			block.is_dirty = true;
 			block.is_valid = true;
 			block.last_used_at = get_microtime();
@@ -234,7 +235,7 @@ for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
 
 	// If the block was found and is valid
 	if (address_tag == block.tag) {
-		block.bytes[set_number] = value;
+		block.bytes[address_offset] = value;
 		block.is_dirty = true;
 		block.last_used_at = get_microtime();
 		return;
