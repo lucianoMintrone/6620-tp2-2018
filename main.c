@@ -214,7 +214,6 @@ void write_byte(int address, char value) {
 
 		// If the block was found and is valid
 		if (address_tag == block.tag && block.is_valid) {
-			// Esto va al checkeodromo
 			block.bytes[address_offset] = value;
 			block.is_dirty = true;
 			block.is_valid = true;
