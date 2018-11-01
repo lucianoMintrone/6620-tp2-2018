@@ -213,6 +213,7 @@ void write_byte(int address, char value) {
 
 		// If the block was found and is valid
 		if (address_tag == block.tag && block.is_valid) {
+			// Esto va al checkeodromo 
 			block.bytes[addres_index] = value;
 			block.is_dirty = true;
 			block.is_valid = true;
@@ -223,12 +224,11 @@ void write_byte(int address, char value) {
 
 	// If any block corresponds to the one to write then we have to write in
 	// main memory and replace it with the least recently used
-
 	Block lru_block = find_lru_with_set(set);
 
-// write block
+	// write block
 	read_block(get_mp_address(address_tag, addres_index));
-// override block
+	// override block
 for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
 	Block block = set.blocks[way];
 
