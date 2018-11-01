@@ -120,13 +120,12 @@ void init() {
 }
 
 Set find_set(int address) {
-	return cache.sets[get_index(address) - 1];
+	return cache.sets[get_index(address)];
 }
 
-Block find_lru(int setnum) {
-	int i;
-	Set set = cache.sets[setnum];
+Block find_lru_with_set(Set set) {
 	Block lru_block = set.blocks[0];
+	int i;
 	for(i = 1; i < NUMBER_OF_BLOCKS_IN_SET; i++) {
 		Block block = set.blocks[i];
 		if (block.last_used_at < lru_block.last_used_at) {
@@ -134,6 +133,12 @@ Block find_lru(int setnum) {
 		}
 	}
 	return lru_block;
+
+}
+
+Block find_lru(int setnum) {
+	Set set = cache.sets[setnum];
+	find_lru_with_set(set);
 }
 
 int is_dirty(int way, int blocknum) {
@@ -148,6 +153,8 @@ void write_block(int way, int set_number) {
 	block.last_used_at = 0;
 	memory.blocks[mp_address] = block;
 }
+
+
 
 void read_block(int blocknum) {
 	Block memory_block = memory.blocks[blocknum];
@@ -195,23 +202,38 @@ int read_from_cache(char* address, char* value) {
 }
 
 
-
-
 void write_byte(int address, char value) {
-	printf("write byte with %d %c\n", address, value);
 	Set set = find_set(address);
+	int set_number = get_index(address);
+	int address_tag = get_tag(address);
+
+	// Iterate in all the ways of the set
 	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
-		printf("%s %zu\n", "el way", way);
-
 		Block block = set.blocks[way];
-		if (block.is_dirty) {
-			printf("%s\n", "block is dirty");
-		} else {
-			printf("%s\n", "block is not dirty");
-		}
 
+		// If the block was found
+		if (address_tag == block.tag) {
+			block.bytes[set_number] = value;
+			block.is_dirty = true;
+			block.is_valid = true;
+			block.last_used_at = get_microtime();
+			return;
+		}
 	}
 
+	// If any block corresponds to the one to write then we have to write in
+	// main memory and replace it with the least recently used
+
+
+	memory.blocks[address / NUMBER_OF_BYTES_IN_BLOCK].bytes[get_offset(address)] = value;
+	Block lru_block = find_lru_with_set(set);
+
+// if lru block is dirty migh write back = brite block
+	if (lru_block.is_dirty) {
+		write_block(get_way_of_block(block, address_index), address_index);
+	}
+
+	read_block();
 }
 
 int write_in_cache(char* address, char* value) {
