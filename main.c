@@ -220,12 +220,8 @@ int read_byte(int address) {
 	return 300;
 }
 
-int read_from_cache(char* address, char* value) {
-	return read_byte(atoi(address));
-}
 
-
-void write_byte(int address, int value) {
+int write_byte(int address, int value) {
 	cache.number_of_memory_accesses ++;
 
 	// Set set = find_set(address);
@@ -244,7 +240,7 @@ void write_byte(int address, int value) {
 			find_set(address).blocks[way].is_dirty = true;
 			find_set(address).blocks[way].is_valid = true;
 			find_set(address).blocks[way].last_used_at = get_microtime();
-			return;
+			return value;
 		}
 	}
 
@@ -261,14 +257,11 @@ void write_byte(int address, int value) {
 			cache.sets[addres_index].blocks[way].bytes[address_offset] = value;
 			cache.sets[addres_index].blocks[way].is_dirty = true;
 			cache.sets[addres_index].blocks[way].last_used_at = get_microtime();
-			return;
+			return value;
 		}
 	}
-}
 
-int write_in_cache(char* address, char* value) {
-	write_byte(atoi(address), atoi(value));
-	return atoi(value);
+	return value;
 }
 
 double calculate_miss_rate() {
@@ -279,13 +272,25 @@ double calculate_miss_rate() {
 	}
 }
 
+bool address_is_valid(int address) {
+	return address >= 0 && address < 65536;
+}
+
 void cache_data(char* operation, char* address, char* value) {
 	if (strcmp(operation, "R") == 0) {
-		printf("Value read: %d\n", read_from_cache(address, value));
+		if(address_is_valid(atoi(address))) {
+			printf("Value read: %d\n", read_byte(atoi(address)));	
+		} else {
+			printf("The address %d is invalid\n", atoi(address));
+		}
 	}
 	if (strcmp(operation, "W") == 0) {
 		address[strlen(address)-1] = 0;
-		printf("Value writen: %d\n", write_in_cache(address, value));
+		if(address_is_valid(atoi(address))) {
+			printf("Value writen: %d\n", write_byte(atoi(address), atoi(value)));	
+		} else {
+			printf("The address %d is invalid\n", atoi(address));
+		}
 	}
 	if (strcmp(operation, "MR") == 0) {
 		printf("Miss Rate: %f\n", calculate_miss_rate());
