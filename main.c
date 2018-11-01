@@ -214,6 +214,8 @@ int read_byte(int address) {
 			return block.bytes[address_offset];
 		}
 	}
+	// cannot return 300 is out of bounds of a char ...
+	return 300;
 }
 
 int read_from_cache(char* address, char* value) {
