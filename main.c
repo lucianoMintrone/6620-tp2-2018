@@ -287,7 +287,11 @@ void cache_data(char* operation, char* address, char* value) {
 	if (strcmp(operation, "W") == 0) {
 		address[strlen(address)-1] = 0;
 		if(address_is_valid(atoi(address))) {
-			printf("Value writen: %d\n", write_byte(atoi(address), atoi(value)));	
+			if(atoi(value) >= 0 && atoi(value) < 256) {
+				printf("Value writen: %d\n", write_byte(atoi(address), atoi(value)));	
+			} else {
+				printf("The value %d is invalid\n", atoi(value));
+			}
 		} else {
 			printf("The address %d is invalid\n", atoi(address));
 		}
