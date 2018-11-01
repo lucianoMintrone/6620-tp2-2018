@@ -69,7 +69,7 @@ void init_principal_memory() {
 		block.is_dirty = false;
 		block.is_valid = true;
 		block.last_used_at = 0;
-		block.tag = 0;
+		block.tag = -1;
 		int k;
 		for(k = 0; k < NUMBER_OF_BYTES_IN_BLOCK; k++) {
 			block.bytes[k] = 0;
@@ -107,7 +107,7 @@ void init() {
 			block.is_dirty = false;
 			block.is_valid = false;
 			block.last_used_at = 0;
-			block.tag = 0;
+			block.tag = -1;
 			int k;
 			for(k = 0; k < NUMBER_OF_BYTES_IN_BLOCK; k++) {
 				block.bytes[k] = 0;
@@ -146,27 +146,40 @@ int is_dirty(int way, int blocknum) {
 }
 
 void write_block(int way, int set_number) {
-	Block block = cache.sets[set_number].blocks[way];
-	int mp_address = get_mp_address(block.tag, set_number);
-	block.is_dirty = false;
-	block.is_valid = true;
-	block.last_used_at = 0;
-	memory.blocks[mp_address] = block;
+	int mp_address = get_mp_address(cache.sets[set_number].blocks[way].tag, set_number);
+	cache.sets[set_number].blocks[way].is_dirty = false;
+	cache.sets[set_number].blocks[way].is_valid = true;
+	cache.sets[set_number].blocks[way].last_used_at = 0;
+	memory.blocks[mp_address].tag = cache.sets[set_number].blocks[way].tag;
+	memory.blocks[mp_address].is_dirty = false;
+	memory.blocks[mp_address].is_valid = true;
+	memory.blocks[mp_address].last_used_at = 0;
+	int byte;
+	for(byte = 0; byte < NUMBER_OF_BYTES_IN_BLOCK; byte++) {
+		memory.blocks[mp_address].bytes[byte] = cache.sets[set_number].blocks[way].bytes[byte];
+	}
 }
 
-
-
 void read_block(int blocknum) {
-	Block memory_block = memory.blocks[blocknum];
 	int set_number = blocknum % NUMBER_OF_SETS_IN_CACHE;
 	Block cache_block = find_lru(set_number);
 	if (cache_block.is_dirty) {
 		write_block(get_way_of_block(cache_block, set_number), set_number);
 	}
-	cache_block = memory_block;
-	cache_block.last_used_at = get_microtime();
-	cache_block.is_valid = true;
-	cache_block.is_dirty = false;
+	int way;
+	for(way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+		if(cache.sets[set_number].blocks[way].tag == cache_block.tag) {
+			cache.sets[set_number].blocks[way].last_used_at = get_microtime();
+			cache.sets[set_number].blocks[way].is_valid = true;
+			cache.sets[set_number].blocks[way].is_dirty = false;
+			int tag = blocknum >> 4;
+			cache.sets[set_number].blocks[way].tag = tag; 
+			int byte;
+			for(byte = 0; byte < NUMBER_OF_BYTES_IN_BLOCK; byte++) {
+				cache.sets[set_number].blocks[way].bytes[byte] = memory.blocks[blocknum].bytes[byte];
+			}
+		}
+	}
 }
 
 void print_result(char **result, int len, FILE *output_file) {
@@ -179,7 +192,7 @@ void print_result(char **result, int len, FILE *output_file) {
 int read_byte(int address) {
 	cache.number_of_memory_accesses ++;
 
-	Set set = find_set(address);
+	// Set set = find_set(address);
 	int addres_index = get_index(address);
 	int address_tag = get_tag(address);
 	int address_offset = get_offset(address);
@@ -187,11 +200,11 @@ int read_byte(int address) {
 	// Iterate in all the ways of the set
 	size_t way;
 	for (way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
-		Block block = set.blocks[way];
+		// Block block = find_set(address).blocks[way];
 
 		// If the block was found and is valid
-		if (address_tag == block.tag && block.is_valid) {
-			return block.bytes[address_offset];
+		if (address_tag == find_set(address).blocks[way].tag && find_set(address).blocks[way].is_valid) {
+			return find_set(address).blocks[way].bytes[address_offset];
 		}
 	}
 
@@ -202,11 +215,11 @@ int read_byte(int address) {
 
 	// Iterate in all the ways of the set
 	for (way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
-		Block block = set.blocks[way];
+		// Block block = set.blocks[way];
 
 		// If the block was found and is valid
-		if (address_tag == block.tag) {
-			return block.bytes[address_offset];
+		if (address_tag == find_set(address).blocks[way].tag) {
+			return find_set(address).blocks[way].bytes[address_offset];
 		}
 	}
 	// cannot return 300 is out of bounds of a char ...
@@ -218,25 +231,25 @@ int read_from_cache(char* address, char* value) {
 }
 
 
-void write_byte(int address, char value) {
+void write_byte(int address, int value) {
 	cache.number_of_memory_accesses ++;
 
-	Set set = find_set(address);
+	// Set set = find_set(address);
 	int addres_index = get_index(address);
 	int address_tag = get_tag(address);
 	int address_offset = get_offset(address);
 
 	// Iterate in all the ways of the set
-	size_t way;
+	int way;
 	for (way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
-		Block block = set.blocks[way];
+		// Block block = find_set(address).blocks[way];
 
 		// If the block was found and is valid
-		if (address_tag == block.tag && block.is_valid) {
-			block.bytes[address_offset] = value;
-			block.is_dirty = true;
-			block.is_valid = true;
-			block.last_used_at = get_microtime();
+		if (address_tag == find_set(address).blocks[way].tag && find_set(address).blocks[way].is_valid) {
+			find_set(address).blocks[way].bytes[address_offset] = value;
+			find_set(address).blocks[way].is_dirty = true;
+			find_set(address).blocks[way].is_valid = true;
+			find_set(address).blocks[way].last_used_at = get_microtime();
 			return;
 		}
 	}
@@ -248,12 +261,12 @@ void write_byte(int address, char value) {
 	read_block(get_mp_address(address_tag, addres_index));
 	// override block
 	for (way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
-		Block block = set.blocks[way];
+		// Block block = set.blocks[way];
 
-		if (address_tag == block.tag) {
-			block.bytes[address_offset] = value;
-			block.is_dirty = true;
-			block.last_used_at = get_microtime();
+		if (address_tag == find_set(address).blocks[way].tag) {
+			cache.sets[addres_index].blocks[way].bytes[address_offset] = value;
+			cache.sets[addres_index].blocks[way].is_dirty = true;
+			cache.sets[addres_index].blocks[way].last_used_at = get_microtime();
 			return;
 		}
 	}
@@ -263,17 +276,6 @@ int write_in_cache(char* address, char* value) {
 	write_byte(atoi(address), atoi(value));
 	return atoi(value);
 }
-
-
-
-
-
-
-
-
-
-
-
 
 double calculate_miss_rate() {
 	if (cache.number_of_memory_accesses != 0) {
