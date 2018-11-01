@@ -185,14 +185,35 @@ void print_result(char **result, int len, FILE *output_file) {
 
 
 int read_byte(int address) {
-	printf("%d\n", address);
+	Set set = find_set(address);
+	int addres_index = get_index(address);
+	int address_tag = get_tag(address);
+	int address_offset = get_offset(address);
 
-	// Set address_set = find_set(address);
-	//
-	// address_set->blocks[0];
+	// Iterate in all the ways of the set
+	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+		Block block = set.blocks[way];
 
+		// If the block was found and is valid
+		if (address_tag == block.tag && block.is_valid) {
+			return block.bytes[address_offset] = value;
+		}
+	}
 
-	return address;
+	// Miss ++
+	cache.number_of_misses ++;
+	// fetch block
+	read_block(get_mp_address(address_tag, addres_index));
+
+	// Iterate in all the ways of the set
+	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+		Block block = set.blocks[way];
+
+		// If the block was found and is valid
+		if (address_tag == block.tag && block.is_valid) {
+			return block.bytes[address_offset] = value;
+		}
+	}
 }
 
 int read_from_cache(char* address, char* value) {
