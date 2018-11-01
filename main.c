@@ -138,7 +138,7 @@ Block find_lru_with_set(Set set) {
 
 Block find_lru(int setnum) {
 	Set set = cache.sets[setnum];
-	find_lru_with_set(set);
+	return find_lru_with_set(set);
 }
 
 int is_dirty(int way, int blocknum) {
@@ -196,7 +196,7 @@ int read_byte(int address) {
 }
 
 int read_from_cache(char* address, char* value) {
-	cache.number_of_memory_accesses += 1;
+	cache.number_of_memory_accesses ++;
 
 	return read_byte(atoi(address));
 }
@@ -222,28 +222,26 @@ void write_byte(int address, char value) {
 		}
 	}
 
-	// If any block corresponds to the one to write then we have to write in
-	// main memory and replace it with the least recently used
-	Block lru_block = find_lru_with_set(set);
+	// Miss ++
+	cache.number_of_misses ++;
 
-	// write block
+	// fetch block
 	read_block(get_mp_address(address_tag, addres_index));
 	// override block
-for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
-	Block block = set.blocks[way];
+	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+		Block block = set.blocks[way];
 
-	// If the block was found and is valid
-	if (address_tag == block.tag) {
-		block.bytes[address_offset] = value;
-		block.is_dirty = true;
-		block.last_used_at = get_microtime();
-		return;
+		if (address_tag == block.tag) {
+			block.bytes[address_offset] = value;
+			block.is_dirty = true;
+			block.last_used_at = get_microtime();
+			return;
+		}
 	}
-}
 }
 
 int write_in_cache(char* address, char* value) {
-	cache.number_of_memory_accesses += 1;
+	cache.number_of_memory_accesses ++;
 	write_byte(atoi(address), atoi(value));
 	return atoi(value);
 }
@@ -304,7 +302,7 @@ void read_file_and_cache_data(FILE *input_file, FILE *output_file) {
 					value = ptr;
 					break;
 			}
-			i += 1;
+			i ++;
 			ptr = strtok(NULL, delim);
 		}
 		cache_data(operation, address, value);
