@@ -204,7 +204,7 @@ int read_from_cache(char* address, char* value) {
 
 void write_byte(int address, char value) {
 	Set set = find_set(address);
-	int set_number = get_index(address);
+	int addres_index = get_index(address);
 	int address_tag = get_tag(address);
 
 	// Iterate in all the ways of the set
@@ -213,7 +213,7 @@ void write_byte(int address, char value) {
 
 		// If the block was found and is valid
 		if (address_tag == block.tag && block.is_valid) {
-			block.bytes[set_number] = value;
+			block.bytes[addres_index] = value;
 			block.is_dirty = true;
 			block.is_valid = true;
 			block.last_used_at = get_microtime();
@@ -224,16 +224,22 @@ void write_byte(int address, char value) {
 	// If any block corresponds to the one to write then we have to write in
 	// main memory and replace it with the least recently used
 
-
-	memory.blocks[address / NUMBER_OF_BYTES_IN_BLOCK].bytes[get_offset(address)] = value;
 	Block lru_block = find_lru_with_set(set);
 
-// if lru block is dirty migh write back = brite block
-	if (lru_block.is_dirty) {
-		write_block(get_way_of_block(block, address_index), address_index);
-	}
+// write block
+	read_block(get_mp_address(address_tag, addres_index));
+// override block
+for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+	Block block = set.blocks[way];
 
-	read_block();
+	// If the block was found and is valid
+	if (address_tag == block.tag) {
+		block.bytes[set_number] = value;
+		block.is_dirty = true;
+		block.last_used_at = get_microtime();
+		return;
+	}
+}
 }
 
 int write_in_cache(char* address, char* value) {
