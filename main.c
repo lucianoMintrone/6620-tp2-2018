@@ -169,19 +169,71 @@ void print_result(char **result, int len, FILE *output_file) {
 	}
 }
 
+
+
+
+
+
+
+
+
+int read_byte(int address) {
+	printf("%d\n", address);
+
+	// Set address_set = find_set(address);
+	//
+	// address_set->blocks[0];
+
+
+	return address;
+}
+
 int read_from_cache(char* address, char* value) {
 	cache.number_of_memory_accesses += 1;
-	return 123;
+
+	return read_byte(atoi(address));
+}
+
+
+
+
+void write_byte(int address, char value) {
+	printf("write byte with %d %c\n", address, value);
+	Set set = find_set(address);
+	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+		printf("%s %zu\n", "el way", way);
+
+		Block block = set.blocks[way];
+		if (block.is_dirty) {
+			printf("%s\n", "block is dirty");
+		} else {
+			printf("%s\n", "block is not dirty");
+		}
+
+	}
+
 }
 
 int write_in_cache(char* address, char* value) {
 	cache.number_of_memory_accesses += 1;
+	write_byte(atoi(address), atoi(value));
 	return atoi(value);
 }
 
+
+
+
+
+
+
+
+
+
+
+
 double calculate_miss_rate() {
 	if (cache.number_of_memory_accesses != 0) {
-		return cache.number_of_misses / cache.number_of_memory_accesses;	
+		return cache.number_of_misses / cache.number_of_memory_accesses;
 	} else {
 		return 0;
 	}
