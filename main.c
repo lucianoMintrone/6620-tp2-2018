@@ -196,7 +196,7 @@ int read_byte(int address) {
 
 		// If the block was found and is valid
 		if (address_tag == block.tag && block.is_valid) {
-			return block.bytes[address_offset] = value;
+			return block.bytes[address_offset];
 		}
 	}
 
@@ -211,7 +211,7 @@ int read_byte(int address) {
 
 		// If the block was found and is valid
 		if (address_tag == block.tag && block.is_valid) {
-			return block.bytes[address_offset] = value;
+			return block.bytes[address_offset];
 		}
 	}
 }
