@@ -28,7 +28,7 @@ typedef struct Set {
 
 typedef struct Cache {
 	int number_of_memory_accesses;
-	int number_of_misses;
+	float number_of_misses;
 	Set sets[NUMBER_OF_SETS_IN_CACHE];
 } Cache;
 
@@ -179,13 +179,6 @@ void read_block(int blocknum) {
 				cache.sets[set_number].blocks[way].bytes[byte] = memory.blocks[blocknum].bytes[byte];
 			}
 		}
-	}
-}
-
-void print_result(char **result, int len, FILE *output_file) {
-	size_t i;
-	for (i = 0; i < len; i++) {
-		fprintf(output_file, "%s\n", result[i]);
 	}
 }
 
