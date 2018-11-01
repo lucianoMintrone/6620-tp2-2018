@@ -211,8 +211,8 @@ void write_byte(int address, char value) {
 	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
 		Block block = set.blocks[way];
 
-		// If the block was found
-		if (address_tag == block.tag) {
+		// If the block was found and is valid
+		if (address_tag == block.tag && block.is_valid) {
 			block.bytes[set_number] = value;
 			block.is_dirty = true;
 			block.is_valid = true;
