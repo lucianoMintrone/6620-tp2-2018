@@ -176,15 +176,9 @@ void print_result(char **result, int len, FILE *output_file) {
 	}
 }
 
-
-
-
-
-
-
-
-
 int read_byte(int address) {
+	cache.number_of_memory_accesses ++;
+
 	Set set = find_set(address);
 	int addres_index = get_index(address);
 	int address_tag = get_tag(address);
@@ -210,7 +204,7 @@ int read_byte(int address) {
 		Block block = set.blocks[way];
 
 		// If the block was found and is valid
-		if (address_tag == block.tag && block.is_valid) {
+		if (address_tag == block.tag) {
 			return block.bytes[address_offset];
 		}
 	}
@@ -219,13 +213,13 @@ int read_byte(int address) {
 }
 
 int read_from_cache(char* address, char* value) {
-	cache.number_of_memory_accesses ++;
-
 	return read_byte(atoi(address));
 }
 
 
 void write_byte(int address, char value) {
+	cache.number_of_memory_accesses ++;
+
 	Set set = find_set(address);
 	int addres_index = get_index(address);
 	int address_tag = get_tag(address);
@@ -264,7 +258,6 @@ void write_byte(int address, char value) {
 }
 
 int write_in_cache(char* address, char* value) {
-	cache.number_of_memory_accesses ++;
 	write_byte(atoi(address), atoi(value));
 	return atoi(value);
 }
