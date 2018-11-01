@@ -185,7 +185,8 @@ int read_byte(int address) {
 	int address_offset = get_offset(address);
 
 	// Iterate in all the ways of the set
-	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+	size_t way;
+	for (way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
 		Block block = set.blocks[way];
 
 		// If the block was found and is valid
@@ -200,7 +201,7 @@ int read_byte(int address) {
 	read_block(get_mp_address(address_tag, addres_index));
 
 	// Iterate in all the ways of the set
-	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+	for (way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
 		Block block = set.blocks[way];
 
 		// If the block was found and is valid
@@ -226,7 +227,8 @@ void write_byte(int address, char value) {
 	int address_offset = get_offset(address);
 
 	// Iterate in all the ways of the set
-	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+	size_t way;
+	for (way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
 		Block block = set.blocks[way];
 
 		// If the block was found and is valid
@@ -245,7 +247,7 @@ void write_byte(int address, char value) {
 	// fetch block
 	read_block(get_mp_address(address_tag, addres_index));
 	// override block
-	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+	for (way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
 		Block block = set.blocks[way];
 
 		if (address_tag == block.tag) {
