@@ -91,7 +91,7 @@ int get_way_of_block(Block block, int set_number) {
 
 int get_mp_address(int tag, int index) {
 	int mp_address = tag;
-	mp_address = mp_address << 6;
+	mp_address = mp_address << 4;
 	return mp_address + index;
 }
 
@@ -178,6 +178,7 @@ void read_block(int blocknum) {
 			for(byte = 0; byte < NUMBER_OF_BYTES_IN_BLOCK; byte++) {
 				cache.sets[set_number].blocks[way].bytes[byte] = memory.blocks[blocknum].bytes[byte];
 			}
+			return;
 		}
 	}
 }
