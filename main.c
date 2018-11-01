@@ -120,13 +120,12 @@ void init() {
 }
 
 Set find_set(int address) {
-	return cache.sets[get_index(address) - 1];
+	return cache.sets[get_index(address)];
 }
 
-Block find_lru(int setnum) {
-	int i;
-	Set set = cache.sets[setnum];
+Block find_lru_with_set(Set set) {
 	Block lru_block = set.blocks[0];
+	int i;
 	for(i = 1; i < NUMBER_OF_BLOCKS_IN_SET; i++) {
 		Block block = set.blocks[i];
 		if (block.last_used_at < lru_block.last_used_at) {
@@ -134,6 +133,12 @@ Block find_lru(int setnum) {
 		}
 	}
 	return lru_block;
+
+}
+
+Block find_lru(int setnum) {
+	Set set = cache.sets[setnum];
+	return find_lru_with_set(set);
 }
 
 int is_dirty(int way, int blocknum) {
@@ -148,6 +153,8 @@ void write_block(int way, int set_number) {
 	block.last_used_at = 0;
 	memory.blocks[mp_address] = block;
 }
+
+
 
 void read_block(int blocknum) {
 	Block memory_block = memory.blocks[blocknum];
@@ -169,19 +176,106 @@ void print_result(char **result, int len, FILE *output_file) {
 	}
 }
 
+int read_byte(int address) {
+	cache.number_of_memory_accesses ++;
+
+	Set set = find_set(address);
+	int addres_index = get_index(address);
+	int address_tag = get_tag(address);
+	int address_offset = get_offset(address);
+
+	// Iterate in all the ways of the set
+	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+		Block block = set.blocks[way];
+
+		// If the block was found and is valid
+		if (address_tag == block.tag && block.is_valid) {
+			return block.bytes[address_offset];
+		}
+	}
+
+	// Miss ++
+	cache.number_of_misses ++;
+	// fetch block
+	read_block(get_mp_address(address_tag, addres_index));
+
+	// Iterate in all the ways of the set
+	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+		Block block = set.blocks[way];
+
+		// If the block was found and is valid
+		if (address_tag == block.tag) {
+			return block.bytes[address_offset];
+		}
+	}
+	// cannot return 300 is out of bounds of a char ...
+	return 300;
+}
+
 int read_from_cache(char* address, char* value) {
-	cache.number_of_memory_accesses += 1;
-	return 123;
+	return read_byte(atoi(address));
+}
+
+
+void write_byte(int address, char value) {
+	cache.number_of_memory_accesses ++;
+
+	Set set = find_set(address);
+	int addres_index = get_index(address);
+	int address_tag = get_tag(address);
+	int address_offset = get_offset(address);
+
+	// Iterate in all the ways of the set
+	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+		Block block = set.blocks[way];
+
+		// If the block was found and is valid
+		if (address_tag == block.tag && block.is_valid) {
+			block.bytes[address_offset] = value;
+			block.is_dirty = true;
+			block.is_valid = true;
+			block.last_used_at = get_microtime();
+			return;
+		}
+	}
+
+	// Miss ++
+	cache.number_of_misses ++;
+
+	// fetch block
+	read_block(get_mp_address(address_tag, addres_index));
+	// override block
+	for (size_t way = 0; way < NUMBER_OF_BLOCKS_IN_SET; way++) {
+		Block block = set.blocks[way];
+
+		if (address_tag == block.tag) {
+			block.bytes[address_offset] = value;
+			block.is_dirty = true;
+			block.last_used_at = get_microtime();
+			return;
+		}
+	}
 }
 
 int write_in_cache(char* address, char* value) {
-	cache.number_of_memory_accesses += 1;
+	write_byte(atoi(address), atoi(value));
 	return atoi(value);
 }
 
+
+
+
+
+
+
+
+
+
+
+
 double calculate_miss_rate() {
 	if (cache.number_of_memory_accesses != 0) {
-		return cache.number_of_misses / cache.number_of_memory_accesses;	
+		return cache.number_of_misses / cache.number_of_memory_accesses;
 	} else {
 		return 0;
 	}
@@ -224,7 +318,7 @@ void read_file_and_cache_data(FILE *input_file, FILE *output_file) {
 					value = ptr;
 					break;
 			}
-			i += 1;
+			i ++;
 			ptr = strtok(NULL, delim);
 		}
 		cache_data(operation, address, value);
